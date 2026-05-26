@@ -1,0 +1,53 @@
+{
+  "title": "Semana MEI",
+  "created": "2026-05-26T15:34:55.606734",
+  "architecture": "v2_overlay",
+  "description": "Sistema onde header SPSS sobrepõe interface com navegação lateral otimizada",
+  "client_logo": "Logo_Sebrae.png",
+  "password": "Sebrae@2026!",
+  "welcome_title": "Semana MEI",
+  "welcome_message": "Selecione um menu para começar.",
+  "items": [
+    {
+      "id": "home",
+      "title": "Início",
+      "icon": "🏠",
+      "type": "action",
+      "action": "showWelcome"
+    },
+    {
+      "id": "semana-mei",
+      "title": "Semana MEI",
+      "icon": "📁",
+      "type": "group",
+      "expanded": false,
+      "children": [
+        {
+          "id": "planaltina",
+          "title": "Planaltina",
+          "file": "planaltina.html",
+          "description": "",
+          "overlay": true,
+          "added": "2026-05-26T16:54:08.556898"
+        },
+        {
+          "id": "recanto-das-emas",
+          "title": "Recanto das Emas",
+          "file": "recantodasemas.html",
+          "description": "",
+          "overlay": true,
+          "added": "2026-05-26T16:54:34.627174"
+        }
+      ]
+    }
+  ],
+  "palette": {
+    "primary": "#7BAFC0",
+    "primary_dark": "#4d8a9e",
+    "teal_light": "#EDF5F7",
+    "green": "#6FAB8A",
+    "green_dark": "#3d8a62",
+    "red": "#B83B5C"
+  },
+  "updated": "2026-05-26T17:00:33.098304"
+}
