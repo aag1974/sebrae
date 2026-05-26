@@ -1,0 +1,4 @@
+# Dados brutos / privados (não publicar)
+*.sav
+*.xlsx
+.DS_Store

@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semana MEI</title>
+    <style>
+        :root {
+            --teal: #7BAFC0;
+            --teal-dark: #4d8a9e;
+            --teal-light: #EDF5F7;
+            --green: #6FAB8A;
+            --green-dark: #3d8a62;
+            --red: #B83B5C;
+            --bg: #f8f9fa;
+            --text: #333;
+            --text-light: #6c757d;
+            --border: #e5e5e5;
+            --hover: #f4f8f9;
+            --active-bg: #EDF5F7;
+            --active-border: #7BAFC0;
+            --active-text: #4d8a9e;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg); color: var(--text);
+            overflow: hidden; height: 100vh;
+        }
+        .dashboard-container { display: flex; height: 100vh; }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: 220px; background: white;
+            box-shadow: 4px 0 16px rgba(0,0,0,0.08);
+            display: flex; flex-direction: column;
+            flex-shrink: 0; transition: width 0.25s ease; z-index: 1000;
+        }
+        .sidebar.collapsed { width: 52px; }
+
+        .sidebar-logo {
+            padding: 12px 14px;
+            border-bottom: 0.5px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            min-height: 70px; overflow: hidden;
+        }
+        .client-logo {
+            max-width: 148px; max-height: 52px;
+            object-fit: contain; transition: all 0.25s;
+        }
+        .sidebar.collapsed .client-logo { max-width: 30px; max-height: 30px; }
+        .logo-placeholder { font-size: 24px; color: var(--teal); }
+
+        .sidebar-menu {
+            flex: 1; overflow-y: auto; overflow-x: hidden; padding: 5px 0;
+        }
+        .sidebar-menu::-webkit-scrollbar { width: 3px; }
+        .sidebar-menu::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .menu-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 16px 10px 18px; cursor: pointer;
+            border-left: 2px solid transparent;
+            font-size: 13px; color: var(--text);
+            transition: background 0.15s, border-color 0.15s;
+            position: relative; user-select: none;
+        }
+        .menu-item:hover { background: var(--hover); border-left-color: var(--teal); }
+        .menu-item.active { background: var(--active-bg); border-left-color: var(--active-border); color: var(--active-text); font-weight: 500; }
+        .menu-item.group-open { color: var(--active-text); font-weight: 500; }
+
+        .menu-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+        .menu-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: opacity 0.2s; }
+        .sidebar.collapsed .menu-text { opacity: 0; pointer-events: none; }
+
+        .expand-icon {
+            font-size: 8px; color: #bbb;
+            transition: transform 0.2s; flex-shrink: 0;
+            order: -1;  /* move para antes do texto */
+            width: 12px; text-align: center;
+        }
+        .menu-item.group-open .expand-icon { transform: rotate(90deg); color: var(--teal); }
+        .sidebar.collapsed .expand-icon { display: none; }
+
+        .menu-tooltip {
+            display: none; position: absolute; left: 58px; top: 50%;
+            transform: translateY(-50%); background: #222; color: #fff;
+            padding: 4px 10px; border-radius: 5px; font-size: 12px;
+            white-space: nowrap; pointer-events: none; z-index: 9999;
+        }
+        .sidebar.collapsed .menu-item:hover .menu-tooltip { display: block; }
+
+        .submenu {
+            max-height: 0; overflow: hidden;
+            transition: max-height 0.25s ease;
+            background: rgba(123,175,192,0.03);
+            border-left: 2px solid var(--border);
+            margin-left: 30px;
+        }
+        .submenu.open { max-height: 600px; }
+        .sidebar.collapsed .submenu { display: none; }
+
+        .submenu-item {
+            padding: 8px 16px 8px 14px;
+            font-size: 13px; color: var(--text-light);
+            cursor: pointer; border-left: 2px solid transparent;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .submenu-item:hover { background: var(--hover); border-left-color: var(--teal); color: var(--text); }
+        .submenu-item.active { background: var(--active-bg); border-left-color: var(--active-border); color: var(--active-text); font-weight: 500; }
+
+        /* ── RODAPÉ SIDEBAR ── */
+        .sidebar-footer {
+            border-top: 0.5px solid var(--border);
+            padding: 9px 11px;
+            display: flex; align-items: center; gap: 8px; overflow: hidden;
+        }
+
+        .opiniao-brand {
+            display: flex; align-items: center; gap: 7px;
+            flex: 1; overflow: hidden; transition: opacity 0.2s;
+        }
+        .sidebar.collapsed .opiniao-brand { opacity: 0; width: 0; pointer-events: none; }
+
+        .opiniao-logo-img {
+            height: 28px; width: auto; object-fit: contain; flex-shrink: 0;
+        }
+        .opiniao-name {
+            font-size: 11px; font-weight: 600; color: #c0c0c0;
+            white-space: nowrap;
+        }
+
+        .toggle-btn {
+            width: 28px; height: 28px;
+            border: 0.5px solid var(--border); border-radius: 6px;
+            background: var(--bg); color: #aaa;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 13px; flex-shrink: 0;
+            transition: background 0.15s, color 0.15s;
+            user-select: none;
+        }
+        .toggle-btn:hover { background: #e9ecef; color: #555; }
+
+        /* ── MAIN CONTENT ── */
+        .main-content { flex: 1; background: var(--bg); position: relative; overflow: hidden; }
+        .content-frame { width: 100%; height: 100vh; border: none; background: white; }
+
+        .loading {
+            display: flex; align-items: center; justify-content: center;
+            height: 100vh; font-size: 15px; color: var(--text-light); background: white; gap: 12px;
+        }
+        .loading-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--teal); opacity: 0.3;
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+        .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes pulse { 0%,100%{opacity:0.3;transform:scale(1)} 50%{opacity:1;transform:scale(1.3)} }
+
+        .welcome {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            height: 100vh; text-align: center; padding: 60px 40px; background: white;
+        }
+        .welcome-inner {
+            display: flex; align-items: center; gap: 64px;
+            width: 100%; max-width: 860px;
+        }
+        .welcome-stat-n { font-size: 40px; font-weight: 500; color: var(--teal-dark); }
+        .welcome-stat-lbl { font-size: 11px; color: #aaa; margin-top: 6px; text-transform: uppercase; letter-spacing: .05em; }
+
+        .error-state {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            height: 100vh; text-align: center; padding: 40px; background: white;
+        }
+        .error-state h2 { color: var(--red); font-size: 16px; margin: 12px 0 8px; font-weight: 500; }
+        .error-state p { color: var(--text-light); font-size: 13px; }
+
+        @media (max-width: 768px) {
+            .sidebar { position: absolute; left: -220px; z-index: 2000; transition: left 0.25s; }
+            .sidebar.mobile-open { left: 0; }
+            .mobile-overlay { position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:1500;display:none; }
+            .mobile-overlay.active { display: block; }
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <img src="Logo_Sebrae.png" alt="Logo do Cliente" class="client-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><div class="logo-placeholder" style="display:none;">🏢</div>
+        </div>
+        <nav class="sidebar-menu" id="sidebarMenu"></nav>
+        <div class="sidebar-footer">
+            <div class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()">‹</div>
+        </div>
+    </div>
+
+    <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobile()"></div>
+
+    <!-- TELA DE SENHA -->
+    <div id="passwordScreen" style="
+        position:fixed;top:0;left:0;right:0;bottom:0;
+        background:#f4f7f9;display:flex;align-items:center;justify-content:center;
+        z-index:9999;flex-direction:column;">
+        <div style="background:white;border:0.5px solid #e5e5e5;border-radius:16px;
+            padding:48px 56px;text-align:center;max-width:420px;width:90%;
+            box-shadow:0 4px 32px rgba(0,0,0,0.08);">
+
+            <!-- Logo do cliente -->
+            <div id="pwLogoArea" style="margin-bottom:36px;min-height:20px;"></div>
+
+            <!-- Aviso de conteúdo restrito em destaque -->
+            <div style="background:#EDF5F7;border:0.5px solid rgba(123,175,192,0.35);
+                border-radius:8px;padding:12px 16px;margin-bottom:28px;">
+                <p style="font-size:13px;font-weight:600;color:#4d8a9e;margin:0;">
+                    🔒 Conteúdo restrito
+                </p>
+                <p style="font-size:12px;color:#6c757d;margin:6px 0 0;line-height:1.5;">
+                    Digite a senha fornecida para acessar este painel.
+                </p>
+            </div>
+
+            <!-- Campo de senha -->
+            <div style="position:relative;margin-bottom:12px;">
+                <input type="password" id="pwInput" placeholder="Senha de acesso"
+                    style="width:100%;padding:12px 44px 12px 14px;border:0.5px solid #ddd;border-radius:8px;
+                        font-size:14px;outline:none;transition:border-color .15s;box-sizing:border-box;color:#333;"
+                    onkeydown="if(event.key==='Enter')checkPassword()"
+                    onfocus="this.style.borderColor='#7BAFC0'" onblur="this.style.borderColor='#ddd'">
+                <span onclick="togglePwVis()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);
+                    cursor:pointer;font-size:15px;color:#bbb;user-select:none;" id="pwEye">👁</span>
+            </div>
+            <p id="pwError" style="color:#B83B5C;font-size:12px;margin-bottom:10px;min-height:18px;"></p>
+
+            <!-- Botão entrar -->
+            <button onclick="checkPassword()" style="width:100%;padding:12px;background:#7BAFC0;color:white;
+                border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;letter-spacing:.02em;
+                transition:background .15s;" onmouseover="this.style.background='#4d8a9e'"
+                onmouseout="this.style.background='#7BAFC0'">Entrar</button>
+
+            <!-- Rodapé Opinião -->
+            <div style="margin-top:32px;padding-top:24px;border-top:0.5px solid #f0f0f0;">
+                <p style="font-size:11px;color:#bbb;margin-bottom:8px;letter-spacing:.02em;">
+                    Dashboard desenvolvido por
+                </p>
+                <img src="Logo_Opiniao.png" style="height:26px;opacity:.7;"
+                    onerror="this.style.display='none'">
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <iframe class="content-frame" id="contentFrame" style="display:none;"></iframe>
+        <div class="welcome" id="welcomeState" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:left;height:100vh;overflow-y:auto;">
+            <div style="max-width:680px;width:100%;">
+                <div style="font-size:26px;font-weight:700;color:#222;line-height:1.25;margin-bottom:14px;">Painel de Resultados</div>
+                <div style="font-size:14px;color:#5b6670;line-height:1.7;margin-bottom:8px;">O <b>PowerOP</b> é a plataforma da <b>Opinião</b> para explorar os resultados das pesquisas de forma interativa. Navegue pelo <b>menu à esquerda</b> para abrir cada análise — menus com ▸ expandem em subitens.</div>
+                <div style="font-size:14px;color:#5b6670;line-height:1.7;margin-bottom:18px;" id="welcomeMsg">Selecione um item no menu para começar.</div>
+
+                <div style="display:flex;gap:12px;align-items:center;background:var(--teal-light);border:0.5px solid rgba(123,175,192,0.35);border-radius:8px;padding:12px 16px;margin-bottom:26px;">
+                    <div style="font-size:18px;line-height:1;">👆</div>
+                    <div style="font-size:13.5px;color:#4d8a9e;line-height:1.5;"><b>Clique nas categorias dos gráficos</b> para detalhar (drill-down) e cruzar os resultados entre as perguntas.</div>
+                </div>
+
+                <div style="font-size:11px;font-weight:700;color:var(--teal);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px;">Barra de ferramentas de cada análise</div>
+                <div style="display:flex;flex-direction:column;gap:12px;">
+                    <div style="display:flex;gap:14px;align-items:center;">
+                        <div style="width:34px;height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb;border-radius:8px;color:#6FAB8A;">
+                            <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5,8.5 6,12 13.5,4"/></svg>
+                        </div>
+                        <div style="font-size:13.5px;color:#444;line-height:1.5;"><b>Aplicar filtros</b> — aplica os filtros selecionados aos resultados.</div>
+                    </div>
+                    <div style="display:flex;gap:14px;align-items:center;">
+                        <div style="width:34px;height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb;border-radius:8px;color:#B83B5C;">
+                            <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3.5" y1="3.5" x2="12.5" y2="12.5"/><line x1="12.5" y1="3.5" x2="3.5" y2="12.5"/></svg>
+                        </div>
+                        <div style="font-size:13.5px;color:#444;line-height:1.5;"><b>Limpar filtros</b> — remove todos os filtros e volta ao total.</div>
+                    </div>
+                    <div style="display:flex;gap:14px;align-items:center;">
+                        <div style="width:34px;height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb;border-radius:8px;color:var(--teal-dark);">
+                            <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="9" rx="1.5"/><line x1="8" y1="11.5" x2="8" y2="14"/><line x1="5.5" y1="14" x2="10.5" y2="14"/></svg>
+                        </div>
+                        <div style="font-size:13.5px;color:#444;line-height:1.5;"><b>Apresentação</b> — exibe os resultados em tela cheia, ideal para reuniões.</div>
+                    </div>
+                    <div style="display:flex;gap:14px;align-items:center;">
+                        <div style="width:34px;height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb;border-radius:8px;color:#3d8a62;">
+                            <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="2"/><line x1="6" y1="2" x2="6" y2="14"/><line x1="2" y1="6" x2="14" y2="6"/><line x1="2" y1="10" x2="14" y2="10"/></svg>
+                        </div>
+                        <div style="font-size:13.5px;color:#444;line-height:1.5;"><b>Exportar Excel</b> — baixa as tabelas dos resultados em planilha.</div>
+                    </div>
+                    <div style="display:flex;gap:14px;align-items:center;">
+                        <div style="width:34px;height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb;border-radius:8px;color:#B83B5C;">
+                            <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2h6l4 4v8a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><polyline points="10,2 10,6 14,6"/><line x1="5" y1="10" x2="11" y2="10"/><line x1="5" y1="12.5" x2="9" y2="12.5"/></svg>
+                        </div>
+                        <div style="font-size:13.5px;color:#444;line-height:1.5;"><b>Exportar PDF</b> — gera um PDF com os resultados da análise.</div>
+                    </div>
+                </div>
+
+                <div style="margin-top:28px;padding-top:16px;border-top:0.5px solid #f0f0f0;display:flex;align-items:center;gap:12px;">
+                    <img src="Logo_Opiniao.png" style="height:24px;opacity:.75;" onerror="this.style.display='none'">
+                    <span style="font-size:12px;color:#bbb;">Dados que orientam decisões</span>
+                </div>
+            </div>
+        </div>
+                <div class="loading" id="loadingState" style="display:none;">
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+            <span style="margin-left:8px;color:#aaa;font-size:13px">Carregando...</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    const menuConfig = {"title": "Semana MEI", "created": "2026-05-26T15:34:55.606734", "architecture": "v2_overlay", "description": "Sistema onde header SPSS sobrepõe interface com navegação lateral otimizada", "client_logo": "Logo_Sebrae.png", "password": "Sebrae@2026!", "welcome_title": "Semana MEI", "welcome_message": "Selecione um menu para começar.", "items": [{"id": "home", "title": "Início", "icon": "🏠", "type": "action", "action": "showWelcome"}, {"id": "semana-mei", "title": "Semana MEI", "icon": "📁", "type": "group", "expanded": false, "children": [{"id": "planaltina", "title": "Planaltina", "file": "planaltina.html", "description": "", "overlay": true, "added": "2026-05-26T16:54:08.556898"}, {"id": "recanto-das-emas", "title": "Recanto das Emas", "file": "recantodasemas.html", "description": "", "overlay": true, "added": "2026-05-26T16:54:34.627174"}]}], "palette": {"primary": "#7BAFC0", "primary_dark": "#4d8a9e", "teal_light": "#EDF5F7", "green": "#6FAB8A", "green_dark": "#3d8a62", "red": "#B83B5C"}, "gate_storage_key": "powerop_semana_mei", "updated": "2026-05-26T17:00:33.098304"};
+    const DASH_PASSWORD = menuConfig.password || '';
+    const WELCOME_TITLE = menuConfig.welcome_title || menuConfig.title || '';
+    const WELCOME_MSG   = menuConfig.welcome_message || 'Selecione uma análise no menu lateral para começar.';
+    const CLIENT_LOGO   = menuConfig.client_logo || '';
+
+    // Tela de senha
+    function initPasswordScreen() {
+        if (!DASH_PASSWORD) {
+            document.getElementById('passwordScreen').style.display = 'none';
+            initWelcome();
+            return;
+        }
+        // Verificar se já passou pela senha nesta sessão
+        if (sessionStorage.getItem('dash_auth') === DASH_PASSWORD) {
+            document.getElementById('passwordScreen').style.display = 'none';
+            initWelcome();
+            return;
+        }
+        // Mostrar logo na tela de senha
+        if (CLIENT_LOGO) {
+            const pwImg = document.createElement('img');
+            pwImg.src = CLIENT_LOGO;
+            pwImg.style.cssText = 'max-height:64px;max-width:200px;object-fit:contain;';
+            pwImg.onerror = function() { this.style.display='none'; };
+            document.getElementById('pwLogoArea').appendChild(pwImg);
+        }
+    }
+
+    function checkPassword() {
+        const input = document.getElementById('pwInput').value;
+        if (input === DASH_PASSWORD) {
+            sessionStorage.setItem('dash_auth', DASH_PASSWORD);
+            document.getElementById('passwordScreen').style.display = 'none';
+            initWelcome();
+        } else {
+            const err = document.getElementById('pwError');
+            err.textContent = 'Senha incorreta. Tente novamente.';
+            document.getElementById('pwInput').value = '';
+            document.getElementById('pwInput').focus();
+            setTimeout(() => { err.textContent = ''; }, 3000);
+        }
+    }
+
+    function togglePwVis() {
+        const inp = document.getElementById('pwInput');
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+    }
+
+    function initWelcome() {
+        let nTemas = 0, nPesquisas = 0;
+        const themesEl = document.getElementById('welcomeThemes');
+
+        (menuConfig.items || []).forEach(item => {
+            if (item.type === 'group') {
+                nTemas++;
+                if (themesEl) {
+                    const card = document.createElement('div');
+                    card.style.cssText = 'display:flex;align-items:center;gap:14px;padding:14px 18px;border:0.5px solid #e5e5e5;border-radius:8px;cursor:pointer;transition:border-color .15s,background .15s;';
+                    card.onmouseenter = function() { this.style.borderColor='#7BAFC0'; this.style.background='#f9fdfe'; };
+                    card.onmouseleave = function() { this.style.borderColor='#e5e5e5'; this.style.background='white'; };
+                    card.onclick = function() { renderMenu(); };
+                    const dot = document.createElement('div');
+                    dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:#7BAFC0;flex-shrink:0;';
+                    const name = document.createElement('span');
+                    name.style.cssText = 'font-size:14px;color:#333;';
+                    name.textContent = item.title;
+                    card.appendChild(dot);
+                    card.appendChild(name);
+                    themesEl.appendChild(card);
+                }
+                (item.children || []).forEach(child => { if (child.file) nPesquisas++; });
+            } else if (item.file) {
+                nPesquisas++;
+            }
+        });
+
+        const el = (id) => document.getElementById(id);
+        if (el('statTemas'))     el('statTemas').textContent     = nTemas     || '—';
+        if (el('statPesquisas')) el('statPesquisas').textContent = nPesquisas || '—';
+
+        showWelcome();
+    }
+
+    // Inicializar ao carregar
+    window.addEventListener('DOMContentLoaded', initPasswordScreen);
+    let collapsed = false;
+    let isMobile = window.innerWidth <= 768;
+    let currentAnalysisFrame = null;
+    let analysisStats = { loaded:0, variables:0, filters:0, records:0 };
+
+    window.addEventListener('message', e => {
+        if (e.data && e.data.source === 'spss-analysis-overlay') {
+            const { type, data } = e.data;
+            if (type === 'analysis-loaded') {
+                analysisStats = { loaded:1, variables:data.variables, filters:data.filters, records:data.records };
+            }
+        }
+    });
+
+    function toggleSidebar() {
+        const sb = document.getElementById('sidebar');
+        const btn = document.getElementById('toggleBtn');
+        if (isMobile) {
+            sb.classList.toggle('mobile-open');
+            document.getElementById('mobileOverlay').classList.toggle('active');
+        } else {
+            collapsed = !collapsed;
+            sb.classList.toggle('collapsed', collapsed);
+            btn.textContent = collapsed ? '›' : '‹';
+        }
+    }
+
+    function closeMobile() {
+        document.getElementById('sidebar').classList.remove('mobile-open');
+        document.getElementById('mobileOverlay').classList.remove('active');
+    }
+
+    function renderMenu() {
+        const nav = document.getElementById('sidebarMenu');
+        nav.innerHTML = '';
+        menuConfig.items.forEach(item => {
+            if (item.type === 'group') renderGroup(nav, item);
+            else renderItem(nav, item);
+        });
+    }
+
+    function renderGroup(container, group) {
+        const el = document.createElement('div');
+        el.className = 'menu-item' + (group.expanded ? ' group-open' : '');
+        el.innerHTML = `
+            <span class="menu-text">${group.title}</span>
+            <span class="expand-icon">▶</span>
+            <span class="menu-tooltip">${group.title}</span>`;
+        container.appendChild(el);
+
+        const sub = document.createElement('div');
+        sub.className = 'submenu' + (group.expanded ? ' open' : '');
+        container.appendChild(sub);
+
+        el.addEventListener('click', () => {
+            group.expanded = !group.expanded;
+            el.classList.toggle('group-open', group.expanded);
+            sub.classList.toggle('open', group.expanded);
+        });
+
+        (group.children || []).forEach(child => {
+            const si = document.createElement('div');
+            si.className = 'submenu-item';
+            si.textContent = child.title;
+            si.addEventListener('click', e => {
+                e.stopPropagation();
+                loadContent(child);
+                setActive(si);
+                if (isMobile) closeMobile();
+            });
+            sub.appendChild(si);
+        });
+    }
+
+    function renderItem(container, item) {
+        const el = document.createElement('div');
+        el.className = 'menu-item';
+        el.innerHTML = `
+            <span class="menu-text">${item.title}</span>
+            <span class="menu-tooltip">${item.title}</span>`;
+        el.addEventListener('click', () => {
+            if (item.type === 'action' && item.action === 'showWelcome') showWelcome();
+            else if (item.file) loadContent(item);
+            setActive(el);
+            if (isMobile) closeMobile();
+        });
+        container.appendChild(el);
+    }
+
+    function loadContent(item) {
+        const frame = document.getElementById('contentFrame');
+        const welcome = document.getElementById('welcomeState');
+        const loading = document.getElementById('loadingState');
+        welcome.style.display = 'none';
+        frame.style.display = 'none';
+        loading.style.display = 'flex';
+        setTimeout(() => {
+            frame.src = item.file;
+            currentAnalysisFrame = frame.contentWindow;
+            frame.onload = () => { loading.style.display='none'; frame.style.display='block'; };
+            frame.onerror = () => {
+                loading.style.display = 'none';
+                welcome.innerHTML = `<div class="error-state">
+                    <div style="font-size:36px">⚠️</div>
+                    <h2>Arquivo não encontrado</h2>
+                    <p>${item.file}</p></div>`;
+                welcome.style.display = 'flex';
+            };
+        }, 200);
+    }
+
+    function showWelcome() {
+        document.getElementById('contentFrame').style.display = 'none';
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('welcomeState').style.display = 'flex';
+        currentAnalysisFrame = null;
+    }
+
+    function setActive(el) {
+        document.querySelectorAll('.menu-item.active,.submenu-item.active').forEach(e => e.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    function sendCommand(cmd, data={}) {
+        if (currentAnalysisFrame) currentAnalysisFrame.postMessage({ source:'dashboard-master', type:cmd, data }, '*');
+    }
+
+    window.addEventListener('resize', () => { isMobile = window.innerWidth <= 768; });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderMenu();
+        // Auto-carregar primeiro item com arquivo
+        for (const item of menuConfig.items) {
+            if (item.file) { loadContent(item); return; }
+            if (item.type === 'group') {
+                const first = (item.children||[]).find(c => c.file);
+                if (first) { loadContent(first); return; }
+            }
+        }
+        showWelcome();
+    });
+
+    window.dashboardDebug = { stats: () => analysisStats, sendCommand };
+</script>
+</body>
+</html>
