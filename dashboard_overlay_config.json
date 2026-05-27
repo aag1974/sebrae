@@ -37,6 +37,14 @@
           "description": "",
           "overlay": true,
           "added": "2026-05-26T16:54:34.627174"
+        },
+        {
+          "id": "sao-sebastiao",
+          "title": "São Sebastião",
+          "file": "saosebastiao.html",
+          "description": "",
+          "overlay": true,
+          "added": "2026-05-27T16:41:14.297717"
         }
       ]
     }
@@ -49,5 +57,5 @@
     "green_dark": "#3d8a62",
     "red": "#B83B5C"
   },
-  "updated": "2026-05-26T17:00:33.098304"
+  "updated": "2026-05-27T16:41:14.297824"
 }
